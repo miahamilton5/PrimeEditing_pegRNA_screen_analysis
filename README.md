@@ -14,24 +14,19 @@ Every targeting pegRNA (installing the ALT allele) is paired with a matched-cont
 
 ![Targeting vs matched control pegRNA design](docs/manuscript_figures/pegRNA_matched_control_schematic.png)
 
-This repository walks through the pipeline using the FAM120A locus screen as a worked example: 1,710 pegRNAs installing 1,143 unique variants (common SNPs prioritized from GWAS/FINEMAP fine-mapping and CRISPRi hits, small synthetic indels centered on those SNPs to increase detectable effect size, and 5 bp synthetic deletions at the FAM120A TSS as positive controls), each targeting pegRNA paired with a matched REF-allele control, plus 200 non-targeting control pegRNAs. This library composition is specific to the FAM120A screen; the SV2A and STAG1 screens used their own separately-designed pegRNA libraries, not included in this repo.
+This study ran three PE screens, one per WES-prioritized locus (FAM120A, SV2A, STAG1), each with its own independently-designed pegRNA library: common SNPs prioritized from GWAS/FINEMAP fine-mapping and CRISPRi hits (up to 4 pegRNAs per SNP), small synthetic indels centered on those SNPs to increase detectable effect size (up to 2 pegRNAs per indel), and 5 bp synthetic deletions at the target gene's TSS as positive controls, each targeting pegRNA paired with a matched REF-allele control, plus 100-200 non-targeting control pegRNAs per library. pegRNAs were designed with [PRIDICT2.0](https://github.com/uzh-dqbm-cmi/PRIDICT), favoring higher predicted editing efficiency:
 
-| Class | pegRNAs | Unique targets |
-|---|---|---|
-| `snv` (common SNP) | 592 | 148 |
-| `synthetic_indel` (5 bp deletion centered on a SNP) | 214 | 107 |
-| `common_insertion` | 8 | 2 |
-| `TSS_synthetic_indel` (5 bp TSS deletion, positive control) | 20 | 10 |
-| `matched_control` (REF-allele paired control) | 676 | 676 |
-| `non-targeting` | 200 | 200 |
+![pegRNA library composition across all three PE screens](docs/manuscript_figures/pegRNA_library_composition_manuscript.png)
 
-pegRNAs were designed with [PRIDICT2.0](https://github.com/uzh-dqbm-cmi/PRIDICT), and up to 4 pegRNAs were kept per common SNP and up to 2 per synthetic indel, favoring higher predicted editing efficiency. gBlocks encoding each pegRNA, its RT template and PBS, and its reporter were cloned into `pLenti-AN-U6-IN-PE2-SSB-puroR`, transduced into i3N-WTC11 iPSCs (with VPA and hMLH1dn co-treatment to boost editing efficiency), and screened by HCR-FlowFISH three weeks post-transduction, sorting into bottom-20%/top-20%-expression bins (normalized to TBP) across 4 replicates, plus a bulk unsorted sample per replicate:
+gBlocks encoding each pegRNA, its RT template and PBS, and its reporter were cloned into `pLenti-AN-U6-IN-PE2-SSB-puroR`, transduced into i3N-WTC11 iPSCs (with VPA and hMLH1dn co-treatment to boost editing efficiency), and screened by HCR-FlowFISH three weeks post-transduction, sorting into bottom-20%/top-20%-expression bins (normalized to TBP) across 4 replicates, plus a bulk unsorted sample per replicate. The STAG1 library showed the lowest reporter editing efficiency of the three, so cells were additionally sorted into 20-40%/60-80% bins for that screen to increase sensitivity.
 
 | Bin | Sample naming (this repo's convention) |
 |---|---|
-| Bottom 20% expression | `pegFAM120A_b20_r{1-4}` |
-| Top 20% expression | `pegFAM120A_t20_r{1-4}` |
-| Bulk (unsorted) | `pegFAM120A_bulk_r{1-4}` |
+| Bottom 20% expression | `peg<LOCUS>_b20_r{1-4}` |
+| Top 20% expression | `peg<LOCUS>_t20_r{1-4}` |
+| Bulk (unsorted) | `peg<LOCUS>_bulk_r{1-4}` |
+
+This repository walks through the pipeline scripts using the real FAM120A locus screen as a worked example (1,710 pegRNAs installing 1,143 unique variants); the same scripts apply unchanged to the SV2A and STAG1 screens, whose libraries aren't included in this repo.
 
 ## Tools and versions used
 
@@ -43,7 +38,7 @@ pegRNAs were designed with [PRIDICT2.0](https://github.com/uzh-dqbm-cmi/PRIDICT)
 ## Repository contents
 
 - `pegRNA_library/FAM120A_pegRNA_library.csv` — the real FAM120A pegRNA library reference (name, target variant, class, locus, spacer sequence) used as a worked example throughout this README.
-- `scripts/01_generate_count_table.R` through `scripts/04_analyze_bean_results.R` — the full count-table/scaling/BEAN/results pipeline, walked through below. The underlying per-read mapping files, count tables, and BEAN output are not included in this repo; only the library reference and rendered example plots (generated from the real FAM120A screen data) are.
+- `scripts/01_generate_count_table.R` through `scripts/04_analyze_bean_results.R` — the full count-table/scaling/BEAN/results pipeline, walked through below. The underlying per-read mapping files, count tables, and BEAN output are not included in this repo; only the library reference is.
 - `scripts/plot_library_composition.py` — plots pegRNA/target counts per library class directly from a pegRNA library CSV.
 - `scripts/plot_reporter_editing_density.R` — plots the distribution of per-pegRNA reporter editing rates.
 
@@ -56,10 +51,6 @@ Rscript 01_generate_count_table.R pegFAM120A 4 <mapped_reads_dir> <reporter_edit
 ```
 
 Reads are assigned to a single best-matching pegRNA `oligo_id` by perfect-match alignment to the library reference (pegRNA spacer + reporter + barcode). For each replicate, per-oligo read counts in the b20/t20/bulk bins are joined and filtered on `bulk >= 10` reads, the same library-dropout filter used in the CRISPRi pipeline: a pegRNA missing from the bulk sample dropped out of the library for a reason unrelated to sorting (poor cloning/PCR representation, a growth defect), and shouldn't be mistaken for a genuine sorting-driven effect. Reporter editing rate per oligo (`percent_editing`, from sequencing the self-reporter) is averaged across bulk replicates; non-targeting control pegRNAs install no edit, so their reporter is always the reference sequence and they're treated as 100% "editing."
-
-The plot below counts pegRNAs and unique targets per library class directly from the real FAM120A library CSV in this repo:
-
-![FAM120A library composition](docs/example_plots/FAM120A_library_composition.png)
 
 ### 2. Predict endogenous editing and scale counts for BEAN
 
@@ -101,16 +92,18 @@ allelic_mu      = mu_targeting - mu_matched
 allelic_z_score = (mu_targeting - mu_matched) / sqrt(mu_sd_targeting^2 + mu_sd_matched^2)
 ```
 
-Variants are called significant at `|allelic_z_score| >= 1.98`. Running this on the real FAM120A BEAN output: 264 variants had a matched control pair available for this comparison, and 8 were called significant (2 5-bp TSS deletions, 2 5-bp synthetic deletions, 3 SNPs, and 1 other variant):
-
-![FAM120A allelic effect size volcano](docs/example_plots/FAM120A_bean_allelic_volcano.png)
-
-## What the results show
-
-The shape of this real allelic-effect-size plot matches the published result for this screen: the strongest hit is a 5 bp TSS deletion (as expected — direct disruption of the TSS should have the largest effect on expression of any variant class), and several common SNPs and synthetic deletions clear the significance threshold on both sides (increasing and decreasing FAM120A expression).
+Variants are called significant at `|allelic_z_score| >= 1.98`. Running this on the real FAM120A BEAN output: 264 variants had a matched control pair available for this comparison, and 8 were called significant (2 5-bp TSS deletions, 2 5-bp synthetic deletions, 3 SNPs, and 1 other variant) — matching the published result for this screen (dot size below is each variant's editing/scaling efficiency from Step 2; the strongest hit is a 5 bp TSS deletion, as expected since direct disruption of the TSS should have the largest effect on expression of any variant class):
 
 ![FAM120A pegRNA screen volcano, published](docs/manuscript_figures/FAM120A_pegRNA_volcano_manuscript.png)
 
-One of these hits, the FINEMAP SNP rs7853605:A>G in the FAM120A promoter, significantly increased FAM120A expression in this screen, consistent with the direction of its effect as a GTEx eQTL in esophagus - mucosa. Another hit, rs117810130:C>T, was validated in individual edited clones by RT-qPCR, trending toward decreased FAM120A expression in line with the pooled screen. The locus view below shows every variant assayed in this screen relative to the FAM120A gene body and the underlying SCZ GWAS signal:
+## What the results show
 
-![FAM120A locus, assayed variants](docs/manuscript_figures/FAM120A_locus_variants_manuscript.png)
+One of these hits, the FINEMAP SNP rs7853605:A>G, sits directly in the FAM120A promoter (highlighted below) and significantly increased FAM120A expression in this screen:
+
+![FAM120A promoter locus, rs7853605 highlighted](docs/manuscript_figures/FAM120A_promoter_locus_manuscript.png)
+
+This is consistent with the direction of its effect as a GTEx eQTL for FAM120A in esophagus - mucosa (p = 6e-7):
+
+![FAM120A promoter SNPs, GTEx eQTL evidence](docs/manuscript_figures/FAM120A_promoter_GTEx_eQTL_manuscript.png)
+
+Another hit, rs117810130:C>T, was validated in individual edited clones by RT-qPCR, trending toward decreased FAM120A expression in line with the pooled screen.
