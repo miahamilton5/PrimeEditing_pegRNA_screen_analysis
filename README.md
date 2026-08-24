@@ -10,7 +10,7 @@ Because prime editing efficiency varies substantially from pegRNA to pegRNA and 
 
 ![Prime editing HCR-FlowFISH screen schematic](docs/manuscript_figures/PE_screen_schematic.png)
 
-Every targeting pegRNA (installing the ALT allele) is paired with a matched-control pegRNA that installs the REF allele at the same site through the same construct. This controls for any effect of the prime-editing machinery or lentiviral construct itself — steric effects of pegRNA binding, reporter expression, etc. — that has nothing to do with which allele gets installed:
+Every targeting pegRNA (installing the ALT allele) is paired with a matched-control pegRNA that installs the REF allele at the same site through the same construct. This controls for steric effects of pegRNA binding and unintended edits at the endogenous site that have nothing to do with which allele gets installed:
 
 ![Targeting vs matched control pegRNA design](docs/manuscript_figures/pegRNA_matched_control_schematic.png)
 
