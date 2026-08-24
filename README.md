@@ -57,8 +57,6 @@ Rscript 01_generate_count_table.R pegFAM120A 4 <mapped_reads_dir> <reporter_edit
 
 Reads are assigned to a single best-matching pegRNA `oligo_id` by perfect-match alignment to the library reference (pegRNA spacer + reporter + barcode). For each replicate, per-oligo read counts in the b20/t20/bulk bins are joined and filtered on `bulk >= 10` reads, the same library-dropout filter used in the CRISPRi pipeline: a pegRNA missing from the bulk sample dropped out of the library for a reason unrelated to sorting (poor cloning/PCR representation, a growth defect), and shouldn't be mistaken for a genuine sorting-driven effect. Reporter editing rate per oligo (`percent_editing`, from sequencing the self-reporter) is averaged across bulk replicates; non-targeting control pegRNAs install no edit, so their reporter is always the reference sequence and they're treated as 100% "editing."
 
-Because several targeting pegRNAs can share the same matched-control pegRNA, that control's counts and editing rate are duplicated once per targeting pegRNA that references it, so BEAN's downstream model doesn't treat the same matched-control reads as non-independent replicates of each other across multiple variants.
-
 The plot below counts pegRNAs and unique targets per library class directly from the real FAM120A library CSV in this repo:
 
 ![FAM120A library composition](docs/example_plots/FAM120A_library_composition.png)
