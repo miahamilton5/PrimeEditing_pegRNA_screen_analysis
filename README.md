@@ -14,7 +14,7 @@ Every targeting pegRNA (installing the ALT allele) is paired with a matched-cont
 
 ![Targeting vs matched control pegRNA design](docs/manuscript_figures/pegRNA_matched_control_schematic.png)
 
-This repository walks through the pipeline using the FAM120A locus screen as a worked example: 1,710 pegRNAs installing 1,143 unique variants (common SNPs prioritized from GWAS/FINEMAP fine-mapping and CRISPRi hits, small synthetic indels centered on those SNPs to increase detectable effect size, and 5 bp synthetic deletions at the FAM120A TSS as positive controls), each targeting pegRNA paired with a matched REF-allele control, plus 200 non-targeting control pegRNAs.
+This repository walks through the pipeline using the FAM120A locus screen as a worked example: 1,710 pegRNAs installing 1,143 unique variants (common SNPs prioritized from GWAS/FINEMAP fine-mapping and CRISPRi hits, small synthetic indels centered on those SNPs to increase detectable effect size, and 5 bp synthetic deletions at the FAM120A TSS as positive controls), each targeting pegRNA paired with a matched REF-allele control, plus 200 non-targeting control pegRNAs. This library composition is specific to the FAM120A screen; the SV2A and STAG1 screens used their own separately-designed pegRNA libraries, not included in this repo.
 
 | Class | pegRNAs | Unique targets |
 |---|---|---|
