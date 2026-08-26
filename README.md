@@ -70,10 +70,10 @@ This predicted rate becomes each pegRNA's scaling factor for BEAN (`predicted_en
 ### 3. Run BEAN
 
 ```
-./03_run_bean.sh <pegRNA_library_with_scaling.csv> <sample_info.csv> <edited_counts.csv> <output_dir>
+./03_run_bean.sh <pegRNA_library.csv> <sample_info.csv> <counts.csv> <edited_counts.csv> <bcmatch_counts.csv> <output_dir>
 ```
 
-This wraps `bean create-screen` (to build a `ReporterScreen` object from the count matrix and library/sample info) and `bean run sorting variant --scale-by-acc` (BEAN's variant-library mode, appropriate here since several pegRNAs tile each targeted variant and only the intended edit — not bystander edits — is of interest). BEAN was run with default parameters otherwise, grouping pegRNAs by the variant/edit they install and scaling each by the accessibility-adjusted editing rate from Step 2; matched-control pegRNAs are scaled identically to their corresponding targeting pegRNA. Reporter editing rates across the three PE screens in this study had a median of 17-23%:
+This wraps `bean create-screen` (to build a `ReporterScreen` object from the raw, edited-pseudo-count, and barcode-matched count matrices plus library/sample info), `bean qc`, and `bean run sorting variant` (BEAN's variant-library mode, appropriate here since several pegRNAs tile each targeted variant and only the intended edit — not bystander edits — is of interest). The accessibility-adjusted editing-rate scaling from Step 2 is incorporated into the guide metadata before the final run via a manual correction step after `bean qc` (not included in this repo); `bean run` itself was called with no extra options beyond `-o`. Reporter editing rates across the three PE screens in this study had a median of 17-23%:
 
 ![Reporter editing rate distribution](docs/manuscript_figures/reporter_editing_density_manuscript.png)
 
