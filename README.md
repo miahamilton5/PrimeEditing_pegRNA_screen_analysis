@@ -39,6 +39,7 @@ This repository walks through the pipeline scripts using the real FAM120A locus 
 
 - `pegRNA_library/FAM120A_pegRNA_library.csv` — the real FAM120A pegRNA library reference (name, target variant, class, locus, spacer sequence) used as a worked example throughout this README.
 - `scripts/01_generate_count_table.R` through `scripts/04_analyze_bean_results.R` — the full count-table/scaling/BEAN/results pipeline, walked through below. The underlying per-read mapping files, count tables, and BEAN output are not included in this repo; only the library reference is.
+- `scripts/03b_apply_manual_edit_rates.py` — called from `03_run_bean.sh` between `bean qc` and `bean run`; overwrites BEAN's own reporter-based edit calls with the Step 2 scaling factor.
 - `scripts/plot_library_composition.py` — plots pegRNA/target counts per library class directly from a pegRNA library CSV.
 - `scripts/plot_reporter_editing_density.R` — plots the distribution of per-pegRNA reporter editing rates.
 
@@ -70,10 +71,10 @@ This predicted rate becomes each pegRNA's scaling factor for BEAN (`predicted_en
 ### 3. Run BEAN
 
 ```
-./03_run_bean.sh <pegRNA_library.csv> <sample_info.csv> <counts.csv> <edited_counts.csv> <bcmatch_counts.csv> <output_dir>
+./03_run_bean.sh <pegRNA_library.csv> <sample_info.csv> <counts.csv> <edited_counts.csv> <bcmatch_counts.csv> <target_base_changes> <output_dir>
 ```
 
-This wraps `bean create-screen` (to build a `ReporterScreen` object from the raw, edited-pseudo-count, and barcode-matched count matrices plus library/sample info), `bean qc`, and `bean run sorting variant` (BEAN's variant-library mode, appropriate here since several pegRNAs tile each targeted variant and only the intended edit — not bystander edits — is of interest). The accessibility-adjusted editing-rate scaling from Step 2 is incorporated into the guide metadata before the final run via a manual correction step after `bean qc` (not included in this repo); `bean run` itself was called with no extra options beyond `-o`. Reporter editing rates across the three PE screens in this study had a median of 17-23%:
+This wraps `bean create-screen` (to build a `ReporterScreen` object from the raw, edited-pseudo-count, and barcode-matched count matrices plus library/sample info), `bean qc`, `03b_apply_manual_edit_rates.py`, and `bean run sorting variant` (BEAN's variant-library mode, appropriate here since several pegRNAs tile each targeted variant and only the intended edit — not bystander edits — is of interest). BEAN's own reporter-based edit calling (its `edits` layer) is overwritten by `03b_apply_manual_edit_rates.py` with the Step 2 accessibility-adjusted scaling factor (`edits = scaling_factor * X_bcmatch`, falling back to `X_bcmatch` directly for any guide missing a scaling factor), so the final effect-size model sees the same predicted editing rate used everywhere else in this pipeline; `bean run` itself is then called with no extra options beyond `-o`. Reporter editing rates across the three PE screens in this study had a median of 17-23%:
 
 ![Reporter editing rate distribution](docs/manuscript_figures/reporter_editing_density_manuscript.png)
 
